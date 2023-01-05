@@ -36,6 +36,9 @@ jobs:
       env:
        GITHUB_TOKEN: ${{ github.token }}
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+
     - name: Build and push
       env:
         REGISTRY: ${{ env.REGISTRY }}
