@@ -1,0 +1,53 @@
+name: Docker pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-push:
+    name: Build and push repo-image
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+      contents: read
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Sign in to registry
+      uses: docker/login-action@v1
+      env:
+        GITHUB_USER: ${{ github.repository_owner }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: Get last release
+      id: last_release
+      uses: dave-ohouse/action-latest-release-info@v1.3.0
+      env:
+       GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Build and push
+      env:
+        REGISTRY: ${{ env.REGISTRY }}
+        OWNER: ${{ github.repository_owner }}
+        IMAGE_NAME: react-test-app
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/react-test-app:${{ steps.last_release.outputs.name }}, ghcr.io/${{ github.repository_owner }}/react-test-app:latest
+        build-args: |
+          ENVIRONMENT=production
+   
